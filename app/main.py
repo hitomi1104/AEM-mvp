@@ -13,6 +13,7 @@ from fastapi import FastAPI, UploadFile, File
 import pandas as pd
 from io import StringIO, BytesIO
 import pdfplumber
+from app.parse_e2b_xml import parse_e2b_xml
 
 
 from app.etl import clean_dataframe
@@ -39,19 +40,16 @@ app = FastAPI()
 def root():
     return {"message": "LSMV Downstream MVP is live!"}
 
+
+
 @app.post("/upload")
 async def upload_data(file: UploadFile = File(...)):
     filename = file.filename
     content = await file.read()
 
     try:
-        if filename.endswith(".csv"):
-            df = pd.read_csv(StringIO(content.decode()))
-        elif filename.endswith(".json"):
-            df = pd.read_json(StringIO(content.decode()))
-        elif filename.endswith(".xlsx"):
-            df = pd.read_excel(BytesIO(content))
-        elif filename.endswith(".pdf"):
+        # Handle PDF early
+        if filename.endswith(".pdf"):
             text = ""
             with pdfplumber.open(BytesIO(content)) as pdf:
                 for page in pdf.pages:
@@ -61,10 +59,25 @@ async def upload_data(file: UploadFile = File(...)):
                 "type": "pdf",
                 "preview": text[:500]
             }
-        else:
-            return {"error": "Unsupported file format. Use .csv, .json, .xlsx or .pdf"}
 
-        
+        # Handle XML early
+        if filename.endswith(".xml"):
+            records = parse_e2b_xml(content)
+            return {
+                "filename": filename,
+                "records": records
+            }
+
+        # Handle tabular files
+        if filename.endswith(".csv"):
+            df = pd.read_csv(StringIO(content.decode()))
+        elif filename.endswith(".json"):
+            df = pd.read_json(StringIO(content.decode()))
+        elif filename.endswith(".xlsx"):
+            df = pd.read_excel(BytesIO(content))
+        else:
+            return {"error": "Unsupported file format. Use .csv, .json, .xlsx, .xml, or .pdf"}
+
         df = clean_dataframe(df)
 
         return {
@@ -78,13 +91,24 @@ async def upload_data(file: UploadFile = File(...)):
         return {"error": str(e)}
 
 
+from fastapi.responses import JSONResponse, StreamingResponse
+import json
+
 @app.post("/generate-json")
 async def generate_json(file: UploadFile = File(...)):
     filename = file.filename
     content = await file.read()
 
     try:
-        # Load file
+        # Handle XML separately
+        if filename.endswith(".xml"):
+            records = parse_e2b_xml(content)
+            return {
+                "filename": filename,
+                "records": records
+            }
+
+        # Load tabular files
         if filename.endswith(".csv"):
             df = pd.read_csv(StringIO(content.decode()))
         elif filename.endswith(".json"):
@@ -92,9 +116,9 @@ async def generate_json(file: UploadFile = File(...)):
         elif filename.endswith(".xlsx"):
             df = pd.read_excel(BytesIO(content))
         else:
-            return {"error": "Unsupported file format"}
+            return {"error": "Unsupported file format. Use .csv, .json, .xlsx, or .xml"}
 
-        # Clean it using ETL logic
+        # Clean using ETL logic
         df = clean_dataframe(df)
 
         # Convert to DMP JSON structure
@@ -108,7 +132,16 @@ async def generate_json(file: UploadFile = File(...)):
     except Exception as e:
         return {"error": str(e)}
     
+
+
+
+    
     from fastapi.responses import JSONResponse
+from fastapi.responses import StreamingResponse
+import json
+
+
+
 from fastapi.responses import StreamingResponse
 import json
 
@@ -118,23 +151,27 @@ async def download_json(file: UploadFile = File(...)):
     content = await file.read()
 
     try:
-        # Step 1: Load the file
-        if filename.endswith(".csv"):
+        if filename.endswith(".xml"):
+            records = parse_e2b_xml(content)
+        elif filename.endswith(".csv"):
             df = pd.read_csv(StringIO(content.decode()))
+            df = clean_dataframe(df)
+            records = generate_json_records(df)
         elif filename.endswith(".json"):
             df = pd.read_json(StringIO(content.decode()))
+            df = clean_dataframe(df)
+            records = generate_json_records(df)
         elif filename.endswith(".xlsx"):
             df = pd.read_excel(BytesIO(content))
+            df = clean_dataframe(df)
+            records = generate_json_records(df)
         else:
-            return {"error": "Unsupported file format. Use .csv, .json, .xlsx"}
+            return {"error": "Unsupported file format. Use .csv, .json, .xlsx, or .xml"}
 
-        # Step 2: Clean and transform
-        df = clean_dataframe(df)
-        json_output = generate_json_records(df)
-
-        # Step 3: Return downloadable file
-        json_bytes = json.dumps(json_output, indent=2).encode("utf-8")
+        # Single place to generate the response
+        json_bytes = json.dumps(records, indent=2).encode("utf-8")
         download_filename = filename.rsplit(".", 1)[0] + "_converted.json"
+
         return StreamingResponse(BytesIO(json_bytes), media_type="application/json", headers={
             "Content-Disposition": f"attachment; filename={download_filename}"
         })
