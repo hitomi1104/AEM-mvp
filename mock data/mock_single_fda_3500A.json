@@ -1,0 +1,36 @@
+[
+  {
+    "report_id": "AEV-00001",
+    "intake_method": "Phone",
+    "report_date": "2025-07-15",
+    "event_date": "2025-07-10",
+    "report_type": [
+      "Adverse Event"
+    ],
+    "outcome": [
+      "Hospitalization",
+      "Life-threatening"
+    ],
+    "patient_age": 67,
+    "patient_sex": "Male",
+    "weight_kg": 72.5,
+    "ethnicity": "Not Hispanic/Latino",
+    "race": [
+      "White"
+    ],
+    "description": "Patient developed severe rash and shortness of breath after 3 days on DrugA.",
+    "suspect_product_name": "DrugA",
+    "dose": 500,
+    "frequency": "Twice a day",
+    "route": "Oral",
+    "start_date": "2025-07-01",
+    "stop_date": "2025-07-10",
+    "indication": "Hypertension",
+    "reporter_profession": "Nurse",
+    "report_source": [
+      "Health Professional"
+    ],
+    "manufacturer_name": "PharmaCo Inc.",
+    "report_sent_to_FDA": "Yes"
+  }
+]
