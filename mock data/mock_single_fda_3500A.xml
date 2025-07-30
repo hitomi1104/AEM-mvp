@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AdverseEventReport>
+  <ReportId>AEV-00001</ReportId>
+  <EventDate>2025-07-10</EventDate>
+  <Description>Patient developed severe rash and shortness of breath after 3 days on DrugA.</Description>
+  <Product>
+    <Name>DrugA</Name>
+    <Dose>500</Dose>
+    <Route>Oral</Route>
+  </Product>
+  <Outcomes>
+    <Outcome>Hospitalization</Outcome>
+    <Outcome>Life-threatening</Outcome>
+  </Outcomes>
+  <Source>Health Professional</Source>
+</AdverseEventReport>
