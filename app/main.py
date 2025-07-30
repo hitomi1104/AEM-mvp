@@ -107,3 +107,37 @@ async def generate_json(file: UploadFile = File(...)):
 
     except Exception as e:
         return {"error": str(e)}
+    
+    from fastapi.responses import JSONResponse
+from fastapi.responses import StreamingResponse
+import json
+
+@app.post("/download-json")
+async def download_json(file: UploadFile = File(...)):
+    filename = file.filename
+    content = await file.read()
+
+    try:
+        # Step 1: Load the file
+        if filename.endswith(".csv"):
+            df = pd.read_csv(StringIO(content.decode()))
+        elif filename.endswith(".json"):
+            df = pd.read_json(StringIO(content.decode()))
+        elif filename.endswith(".xlsx"):
+            df = pd.read_excel(BytesIO(content))
+        else:
+            return {"error": "Unsupported file format. Use .csv, .json, .xlsx"}
+
+        # Step 2: Clean and transform
+        df = clean_dataframe(df)
+        json_output = generate_json_records(df)
+
+        # Step 3: Return downloadable file
+        json_bytes = json.dumps(json_output, indent=2).encode("utf-8")
+        download_filename = filename.rsplit(".", 1)[0] + "_converted.json"
+        return StreamingResponse(BytesIO(json_bytes), media_type="application/json", headers={
+            "Content-Disposition": f"attachment; filename={download_filename}"
+        })
+
+    except Exception as e:
+        return {"error": str(e)}
