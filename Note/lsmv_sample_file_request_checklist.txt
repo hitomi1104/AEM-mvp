@@ -1,0 +1,43 @@
+
+LSMV to Downstream: Sample File Request Checklist (per endpoint)
+
+For each of the following endpoints:
+EBO, PowerBI, HFP Complaint FDA TRAK Dashboard, AE Finder, WILEE, OpenFDA, HFCS Public
+
+1. Sample File
+- A real or dummy example file used in production or UAT
+- Preferably 1–3 rows for clarity
+- Format: CSV / Excel / JSON — whatever they actually ingest
+
+2. File Format Details
+- What file types are accepted? (e.g., .csv, .json, .xlsx)
+- If API is supported instead of file upload, request:
+  - Example JSON schema
+  - Example POST payload
+
+3. Expected Columns / Fields
+- List of required fields
+- Any optional or conditionally required fields
+- Accepted value formats (e.g., ISO date, MedDRA code, text)
+
+4. Validation / Business Rules
+- Any known data validation rules?
+  - e.g., "eventDate must be before reportDate"
+  - "route must be Oral/IV/SubQ"
+- Are there field dependencies?
+  - e.g., "If outcome = Death, autopsy_required = Yes"
+
+5. Frequency of Submission
+- Is this a daily, weekly, nightly drop?
+- Do filenames follow any naming convention?
+
+6. File Delivery Method
+- How is the file shared?
+  - Manual upload?
+  - SFTP?
+  - Email?
+  - Direct system integration?
+
+7. Scoring / Metadata Notes (if applicable)
+- For AE Finder / WILEE: Is EBGM scoring expected in the file?
+- Are there special internal tags or flags?
