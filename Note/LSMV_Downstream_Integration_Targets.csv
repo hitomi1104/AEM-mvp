@@ -1,0 +1,9 @@
+System/Endpoint,Expected Format,What You Can Do Next
+EBO,CSV or Excel,Create downloadable CSV/Excel export
+PowerBI,CSV or Excel,Create downloadable CSV/Excel export
+HFP Complaint FDA TRAK Dashboard,CSV,Prepare dashboard-ready CSV extract
+AE Finder,JSON (with scoring),"Add scoring engine, export as JSON"
+WILEE (Future),TBD (likely CSV or JSON),Wait for schema to finalize; keep flexible export
+Open FDA,JSON (OpenFDA schema),Map current JSON to OpenFDA schema
+HFCS Public (AE Only),CSV (Public Extract),Extract subset fields for public release CSV
+PRIMO,"CSV, JSON (Internal format)",Simulate intake & rules for quality check
