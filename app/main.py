@@ -18,6 +18,7 @@ from app.parse_e2b_xml import parse_e2b_xml
 
 from app.etl import clean_dataframe
 from app.json_generator import generate_json_records
+from app.utils import mask_json_values
 
 
 app = FastAPI()
