@@ -198,8 +198,23 @@ async def download_json(file: UploadFile = File(...)):
 
 
     ######################### json-LSMV     #########################
-    from app.utils import mask_json_values
-from fastapi.responses import JSONResponse
+# from fastapi.responses import JSONResponse
+
+# @app.post("/generate-json-lsmv")
+# async def generate_json_lsmv(file: UploadFile = File(...)):
+#     try:
+#         content = await file.read()
+#         original = json.loads(content.decode("utf-8"))
+#         masked = mask_json_values(original)
+        
+
+#         return JSONResponse(content=masked)
+
+#     except Exception as e:
+#         return {"error": str(e)}
+from fastapi.responses import StreamingResponse
+import json
+from io import BytesIO
 
 @app.post("/generate-json-lsmv")
 async def generate_json_lsmv(file: UploadFile = File(...)):
@@ -208,7 +223,8 @@ async def generate_json_lsmv(file: UploadFile = File(...)):
         original = json.loads(content.decode("utf-8"))
         masked = mask_json_values(original)
 
-        return JSONResponse(content=masked)
+        json_bytes = json.dumps(masked, indent=2).encode("utf-8")
+        return StreamingResponse(BytesIO(json_bytes), media_type="application/json")
 
     except Exception as e:
         return {"error": str(e)}
