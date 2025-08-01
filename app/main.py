@@ -198,7 +198,29 @@ async def download_json(file: UploadFile = File(...)):
 
 
     ######################### json-LSMV     #########################
-# from fastapi.responses import JSONResponse
+from app.utils import mask_json_values
+from fastapi.responses import JSONResponse
+from fastapi import Request
+
+@app.post("/generate-json-lsmv")
+async def generate_json_lsmv(
+    request: Request,
+    file: UploadFile = File(None)
+):
+    try:
+        if file is not None:
+            # File was uploaded
+            content = await file.read()
+            original = json.loads(content.decode("utf-8"))
+        else:
+            # Raw JSON payload was sent
+            original = await request.json()
+
+        masked = mask_json_values(original)
+        return JSONResponse(content=masked)
+
+    except Exception as e:
+        return {"error": str(e)}
 
 # @app.post("/generate-json-lsmv")
 # async def generate_json_lsmv(file: UploadFile = File(...)):
@@ -206,25 +228,23 @@ async def download_json(file: UploadFile = File(...)):
 #         content = await file.read()
 #         original = json.loads(content.decode("utf-8"))
 #         masked = mask_json_values(original)
-        
 
 #         return JSONResponse(content=masked)
 
 #     except Exception as e:
 #         return {"error": str(e)}
-from fastapi.responses import StreamingResponse
-import json
-from io import BytesIO
+    
+    #########################    
+from app.poster import post_payload
 
-@app.post("/generate-json-lsmv")
-async def generate_json_lsmv(file: UploadFile = File(...)):
+import requests
+
+def post_payload(payload, url="https://aem-mvp.onrender.com/generate-json-lsmv"):
     try:
-        content = await file.read()
-        original = json.loads(content.decode("utf-8"))
-        masked = mask_json_values(original)
-
-        json_bytes = json.dumps(masked, indent=2).encode("utf-8")
-        return StreamingResponse(BytesIO(json_bytes), media_type="application/json")
-
-    except Exception as e:
-        return {"error": str(e)}
+        response = requests.post(url, json=payload, timeout=10)
+        if response.status_code in [200, 201]:
+            return True, response.status_code
+        else:
+            return False, response.status_code
+    except requests.exceptions.RequestException as e:
+        return False, str(e)
