@@ -187,16 +187,20 @@ async def generate_json_lsmv(request: Request, file: UploadFile = File(None)):
 #     except Exception as e:
 #         return {"error": str(e)}
     
-from fastapi import Request
-
 @app.post("/test-post")
-async def test_post(request: Request):
+async def test_post(file: UploadFile = File(...)):
     try:
-        payload = await request.json()
-        result = submit_with_logging(payload, url="https://aem-mvp.onrender.com/generate-json-lsmv")
-        return result
+        content = await file.read()
+        payload = json.loads(content.decode("utf-8"))
+
+        # Convert all values to "1"
+        from app.utils import mask_json_values
+        masked = mask_json_values(payload)
+
+        return JSONResponse(content=masked)
+
     except Exception as e:
-        return {"error": str(e)}
+        return {"status": "error", "error": str(e)}
     
 
 from app.poster import post_payload, _log_status, _save_failed_payload
