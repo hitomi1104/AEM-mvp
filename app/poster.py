@@ -50,3 +50,14 @@ def _log_status(status, payload, detail):
 def _save_failed_payload(payload):
     with open(FAILED_FILE, "a") as f:
         f.write(json.dumps(payload) + "\n")
+
+def submit_with_logging(payload, url):
+    result = post_payload(payload, url)
+
+    if result["status"] == "success":
+        _log_status("SUCCESS", payload, f"Code {result['code']}")
+    else:
+        _log_status("FAILURE", payload, result.get("error", "Unknown error"))
+        _save_failed_payload(payload)
+
+    return result
