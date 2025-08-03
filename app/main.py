@@ -169,7 +169,7 @@ async def test_post(request: Request, file: UploadFile = File(None)):
             payload = await request.json()
 
         # Testing fail scenario
-        if payload.get("triggerFail"):
+        if str(payload.get("triggerFail")).lower() in ["true", "1", "yes"]:
             raise ValueError("Simulated failure for testing")
 
         masked = mask_json_values(payload)
