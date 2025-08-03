@@ -143,7 +143,6 @@ async def download_json(file: UploadFile = File(...)):
 
 
 
-
 @app.post("/generate-json-lsmv")
 async def generate_json_lsmv(request: Request, file: UploadFile = File(None)):
     try:
