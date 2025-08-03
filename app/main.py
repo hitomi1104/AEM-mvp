@@ -159,23 +159,55 @@ async def generate_json_lsmv(request: Request, file: UploadFile = File(None)):
         return {"error": str(e)}
 
     
+# @app.post("/test-post")
+# async def test_post(request: Request, file: UploadFile = File(None)):
+#     try:
+#         if file:
+#             content = await file.read()
+#             payload = json.loads(content.decode("utf-8"))
+#         else:
+#             payload = await request.json()
+
+#         # Testing fail scenario
+#         if str(payload.get("triggerFail")).lower() in ["true", "1", "yes"]:
+#             raise ValueError("Simulated failure for testing")
+
+#         masked = mask_json_values(payload)
+#         return JSONResponse(content=masked)
+
+#     except Exception as e:
+#         return {"status": "error", "error": str(e)}
+
 @app.post("/test-post")
 async def test_post(request: Request, file: UploadFile = File(None)):
     try:
+        # Step 1: Load payload from file or JSON
         if file:
             content = await file.read()
             payload = json.loads(content.decode("utf-8"))
         else:
             payload = await request.json()
 
-        # Testing fail scenario
-        if str(payload.get("triggerFail")).lower() in ["true", "1", "yes"]:
-            raise ValueError("Simulated failure for testing")
+        # Step 2: Simulate failure if requested
+        if payload.get("triggerFail") is True:
+            raise ValueError("Simulated failure via triggerFail")
 
+        # Step 3: Mask values
+        from app.utils import mask_json_values
         masked = mask_json_values(payload)
+
+        # Step 4: Log success
+        from app.poster import _log_status
+        _log_status("SUCCESS", payload, "Code 200")
+
         return JSONResponse(content=masked)
 
     except Exception as e:
+        # Step 5: Log failure + save for retry
+        from app.poster import _log_status, _save_failed_payload
+        payload = locals().get("payload", {})  # fallback if payload isn't available
+        _log_status("FAILURE", payload, str(e))
+        _save_failed_payload(payload)
         return {"status": "error", "error": str(e)}
     
 
