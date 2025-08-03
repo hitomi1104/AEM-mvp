@@ -159,49 +159,26 @@ async def generate_json_lsmv(request: Request, file: UploadFile = File(None)):
     except Exception as e:
         return {"error": str(e)}
 
-
-
-# @app.post("/test-post")
-# async def test_post(file: UploadFile = File(...)):
-#     try:
-#         content = await file.read()
-#         payload = json.loads(content.decode("utf-8"))
-
-#         result = post_payload(payload, url="http://127.0.0.1:8000/generate-json-lsmv")
-#         return result
-#     except Exception as e:
-#         return {"error": str(e)}
-#     return result
-
-# @app.post("/test-post")
-# async def test_post(file: UploadFile = File(...)):
-#     try:
-#         content = await file.read()
-#         payload = json.loads(content.decode("utf-8"))
-
-#         # Call the masking function directly instead of posting to another endpoint
-#         masked = mask_json_values(payload)
-
-#         return JSONResponse(content=masked)
-
-#     except Exception as e:
-#         return {"error": str(e)}
     
 @app.post("/test-post")
-async def test_post(file: UploadFile = File(...)):
+async def test_post(request: Request, file: UploadFile = File(None)):
     try:
-        content = await file.read()
-        payload = json.loads(content.decode("utf-8"))
+        if file:
+            content = await file.read()
+            payload = json.loads(content.decode("utf-8"))
+        else:
+            payload = await request.json()
 
-        # Convert all values to "1"
-        from app.utils import mask_json_values
         masked = mask_json_values(payload)
-
         return JSONResponse(content=masked)
 
     except Exception as e:
         return {"status": "error", "error": str(e)}
     
+
+
+
+
 
 from app.poster import post_payload, _log_status, _save_failed_payload
 def submit_with_logging(payload, url):
