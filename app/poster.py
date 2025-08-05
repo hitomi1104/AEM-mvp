@@ -61,10 +61,10 @@ def _save_failed_payload(payload: dict):
                 "timestamp": datetime.utcnow().isoformat(),
                 "payload": payload
             }
-            print("💾 Saving failed payload:", log_entry)  # ← NEW
+            print("Saving failed payload:", log_entry)  # ← NEW
             f.write(json.dumps(log_entry) + "\n")
     except Exception as e:
-        print("❌ Failed to write to failed.jsonl:", str(e))
+        print("Failed to write to failed.jsonl:", str(e))
 
 def submit_with_logging(payload, url):
     result = post_payload(payload, url)
@@ -72,7 +72,11 @@ def submit_with_logging(payload, url):
     if result["status"] == "success":
         _log_status("SUCCESS", payload, f"Code {result['code']}")
     else:
-        _log_status("FAILURE", payload, result.get("error", "Unknown error"))
+        _log_status(
+            "FAILURE", 
+            payload, 
+            f"{result.get('error', 'Unknown error')} → Code {result.get('code', 'N/A')}"
+        )
         _save_failed_payload(payload)
 
     return result
@@ -95,7 +99,11 @@ def retry_failed_payloads(url):
                 if result["status"] == "success":
                     _log_status("RETRY SUCCESS", payload, f"Code {result['code']}")
                 else:
-                    _log_status("RETRY FAILURE", payload, result.get("error", "Unknown error"))
+                    _log_status(
+                        "RETRY FAILURE", 
+                        payload, 
+                        f"{result.get('error', 'Unknown error')} → Code {result.get('code', 'N/A')}"
+                    )
                     new_failures.append(payload)
 
             except json.JSONDecodeError as e:
