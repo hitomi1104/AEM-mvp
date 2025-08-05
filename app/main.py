@@ -21,14 +21,14 @@ def root():
 @app.post("/test-post")
 async def test_post(request: Request, file: UploadFile = File(None)):
     try:
-        # Step 1: Load payload
+        # Step 1: Load payload from file or JSON
         if file:
             content = await file.read()
             payload = json.loads(content.decode("utf-8"))
         else:
             payload = await request.json()
 
-        # Step 2: Simulate failure
+        # Step 2: Simulate failure if requested
         if payload.get("triggerFail") is True:
             raise ValueError("Simulated failure via triggerFail")
 
@@ -36,17 +36,22 @@ async def test_post(request: Request, file: UploadFile = File(None)):
         masked = mask_json_values(payload)
 
         # Step 4: Log success
+        from app.poster import _log_status
         _log_status("SUCCESS", payload, "Code 200")
+
         return JSONResponse(content=masked)
 
     except Exception as e:
-        # Step 5: Log failure
+        from app.poster import _log_status, _save_failed_payload
         try:
             payload
         except NameError:
-            payload = {"reportId": "N/A"}
-        _log_status("FAILURE", payload, str(e))
+            payload = {"reportId": "N/A"}  # fallback if payload never got defined
+
+        # Log failure with Code 500 explicitly
+        _log_status("FAILURE", payload, f"{str(e)} → Code 500")
         _save_failed_payload(payload)
+
         return {"status": "error", "error": str(e)}
 
 
