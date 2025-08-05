@@ -40,31 +40,19 @@ def post_payload(payload, url):
 
 def _log_status(status, payload, detail):
     timestamp = datetime.utcnow().isoformat()
+    log_line = f"[{timestamp}] {status}: {payload.get('reportId', 'N/A')} → {detail}"
+    print("LOGGING TO submission.log:", log_line)  # Debug print
     with open(LOG_FILE, "a") as log:
-        log.write(f"[{timestamp}] {status}: {payload.get('reportId', 'N/A')} → {detail}\n")
-
-
-# def _save_failed_payload(payload):
-#     if "retry_count" not in payload:
-#         payload["retry_count"] = 1
-#     else:
-#         payload["retry_count"] += 1
-
-#     with open(FAILED_FILE, "a") as f:
-#         f.write(json.dumps(payload) + "\n")
-
+        log.write(log_line + "\n")
 def _save_failed_payload(payload: dict):
     from datetime import datetime
-    try:
-        with open("failed.jsonl", "a") as f:
-            log_entry = {
-                "timestamp": datetime.utcnow().isoformat(),
-                "payload": payload
-            }
-            print("Saving failed payload:", log_entry)  # ← NEW
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception as e:
-        print("Failed to write to failed.jsonl:", str(e))
+    log_entry = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "payload": payload
+    }
+    print("SAVING TO failed.jsonl:", log_entry)  # Debug print
+    with open(FAILED_FILE, "a") as f:
+        f.write(json.dumps(log_entry) + "\n")
 
 def submit_with_logging(payload, url):
     result = post_payload(payload, url)
