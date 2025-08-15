@@ -39,3 +39,12 @@ with open(NEW_FAILED_FILE, "w") as f:
 os.replace(NEW_FAILED_FILE, FAILED_FILE)
 
 print(f"\nRetry complete. {len(retry_failures)} still failed.\n")
+
+
+from app.poster import retry_failed_payloads
+
+# Point at Render or local, either works:
+URL = "https://aem-mvp.onrender.com/test-post"  # or "http://localhost:8000/test-post"
+retry_failed_payloads(URL)
+
+
