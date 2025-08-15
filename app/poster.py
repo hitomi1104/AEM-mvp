@@ -146,14 +146,11 @@ def _log_status(status, payload, detail):
         log.write(f"[{ts}] {status}: {rid} → {detail}\n")
 
 def _save_failed_payload(payload: dict):
-    try:
-        with open(FAILED_FILE, "a") as f:
-            f.write(json.dumps({
-                "timestamp": datetime.utcnow().isoformat(),
-                "payload": payload
-            }) + "\n")
-    except Exception as e:
-        print("Failed to write to failed.jsonl:", str(e))
+    # Always store just the payload, plus a retry_count
+    rec = dict(payload)
+    rec["retry_count"] = int(rec.get("retry_count", 0))
+    with open("failed.jsonl", "a") as f:
+        f.write(json.dumps(rec) + "\n")
 
 def retry_failed_payloads(url, max_passes=1):
     """
@@ -194,3 +191,21 @@ def retry_failed_payloads(url, max_passes=1):
             f.write(json.dumps(item) + "\n")
 
     print(f"Retry complete. {len(remaining)} still failed.")
+
+
+"""
+Calls post_payload, logs SUCCESS/FAILURE, and appends to failed.jsonl on failure.
+Returns the result dict from post_payload.
+"""
+def submit_with_logging(payload, url):
+    result = post_payload(payload, url)
+
+    if result.get("status") == "success" and result.get("code") in (200, 201):
+        _log_status("SUCCESS", payload, f"Code {result['code']}")
+    else:
+        # include HTTP code in the log detail if we have it
+        detail = f"{result.get('error', 'Unknown error')} → Code {result.get('code', 'N/A')}"
+        _log_status("FAILURE", payload, detail)
+        _save_failed_payload(payload)
+
+    return result

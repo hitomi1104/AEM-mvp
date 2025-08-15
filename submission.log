@@ -1,9 +1,4 @@
-
-[2025-08-05T08:32:41.364468] SUCCESS: AEV-SUCCESS-004 → Code 200
-[2025-08-05T08:32:45.675594] FAILURE: AEV-FAIL-004 → Simulated failure via triggerFail → Code 500
-[2025-08-15T08:52:15.278552] SUCCESS: AEV-SUCCESS-101 → Code 200
-[2025-08-15T08:52:26.643565] FAILURE: AEV-FAIL-101 → Simulated failure via triggerFail → Code 500
-[2025-08-15T08:53:48.397829] RETRY FAILURE: AEV-FAIL-004 → HTTPSConnectionPool(host='aem-mvp.onrender.com', port=443): Read timed out. (read timeout=30) → Code N/A
-[2025-08-15T08:53:59.764236] RETRY SUCCESS: AEV-FAIL-101 → Code 200
-[2025-08-15T08:54:30.880767] RETRY SUCCESS: AEV-FAIL-004 → Code 200
-[2025-08-15T09:27:32.792019] FAILURE: AEV-FAIL-TEST → Simulated failure via triggerFail → Code 500
+[2025-08-15T10:10:00.931678] FAILURE: AEV-PERSIST-001 → Simulated failure via triggerFail → Code 500
+[2025-08-15T10:10:31.097168] FAILURE: AEV-PERSIST-001 → HTTPSConnectionPool(host='aem-mvp.onrender.com', port=443): Read timed out. (read timeout=30) → Code N/A
+[2025-08-15T10:11:01.146351] RETRY FAILURE: N/A → HTTPSConnectionPool(host='aem-mvp.onrender.com', port=443): Read timed out. (read timeout=30) → Code N/A
+[2025-08-15T10:16:18.440050] SUCCESS: AEV-PERSIST-001 → Code 200
