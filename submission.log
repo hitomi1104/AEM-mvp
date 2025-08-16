@@ -4,3 +4,18 @@
 [2025-08-16T08:24:10.552907] RETRY FAILURE: AEV-FAIL-101 → {"status":"error","error":"Simulated failure via triggerFail"} → Code 500
 [2025-08-16T08:43:51.504086] FAILURE: AEV-FAIL-101 → Simulated failure via triggerFail → Code 500 → Code N/A
 [2025-08-16T08:43:51.505048] RETRY FAILURE: AEV-FAIL-101 → {"status":"error","error":"Simulated failure via triggerFail"} → Code 500
+[2025-08-16T09:03:31.444325] FAILURE: AEV-FAIL-101 → Simulated failure via triggerFail → Code 500
+[2025-08-16T09:04:02.604052] FAILURE: AEV-FAIL-101 → Simulated failure via triggerFail → Code 500
+[2025-08-16T09:04:02.604966] RETRY FAILURE: AEV-FAIL-101 → {"status":"error","error":"Simulated failure via triggerFail"} → Code 500
+[2025-08-16T09:04:24.467325] SUCCESS: AEV-FAIL-101 → OK → Code 200
+[2025-08-16T09:04:24.467876] RETRY SUCCESS: AEV-FAIL-101 → OK → Code 200
+[2025-08-16T09:04:24.469453] SUCCESS: AEV-FAIL-101 → OK → Code 200
+[2025-08-16T09:04:24.469918] RETRY SUCCESS: AEV-FAIL-101 → OK → Code 200
+[2025-08-16T10:07:40.678078] SUCCESS: AEV-SUCCESS-101 → OK → Code 200
+[2025-08-16T10:07:52.666146] FAILURE: AEV-FAIL-101 → Simulated failure via triggerFail → Code 500
+[2025-08-16T10:08:37.924006] FAILURE: AEV-FAIL-101 → Simulated failure via triggerFail → Code 500
+[2025-08-16T10:08:37.924727] RETRY FAILURE: AEV-FAIL-101 → {"status":"error","error":"Simulated failure via triggerFail"} → Code 500
+[2025-08-16T10:08:53.508215] SUCCESS: AEV-FAIL-101 → OK → Code 200
+[2025-08-16T10:08:53.508898] RETRY SUCCESS: AEV-FAIL-101 → OK → Code 200
+[2025-08-16T10:11:00.835684] FAILURE: AEV-FAIL-101 → Simulated failure via triggerFail → Code 500
+[2025-08-16T10:11:17.887317] FAILURE: AEV-FAIL-101 → Simulated failure via triggerFail → Code 500
