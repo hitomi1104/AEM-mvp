@@ -1,110 +1,3 @@
-# import requests
-# import json
-# from datetime import datetime
-
-# LOG_FILE = "submission.log"
-# FAILED_FILE = "failed.jsonl"
-
-
-# def post_payload(payload, url):
-#     try:
-#         if url.endswith("/test-post"):
-#             # Send as multipart file upload
-#             files = {
-#                 'file': ('retry.json', json.dumps(payload), 'application/json')
-#             }
-#             response = requests.post(url, files=files, timeout=30)
-#         else:
-#             # Default: send as raw JSON
-#             response = requests.post(url, json=payload, timeout=30)
-
-#         if response.status_code in [200, 201]:
-#             return {
-#                 "status": "success",
-#                 "code": response.status_code,
-#                 "response": response.json() if response.content else "No content"
-#             }
-#         else:
-#             return {
-#                 "status": "failed",
-#                 "code": response.status_code,
-#                 "error": response.text
-#             }
-
-#     except requests.exceptions.RequestException as e:
-#         return {
-#             "status": "error",
-#             "error": str(e)
-#         }
-
-
-# def _log_status(status, payload, detail):
-#     timestamp = datetime.utcnow().isoformat()
-#     log_line = f"[{timestamp}] {status}: {payload.get('reportId', 'N/A')} → {detail}"
-#     print("LOGGING TO submission.log:", log_line)  # Debug print
-#     with open(LOG_FILE, "a") as log:
-#         log.write(log_line + "\n")
-# def _save_failed_payload(payload: dict):
-#     from datetime import datetime
-#     log_entry = {
-#         "timestamp": datetime.utcnow().isoformat(),
-#         "payload": payload
-#     }
-#     print("SAVING TO failed.jsonl:", log_entry)  # Debug print
-#     with open(FAILED_FILE, "a") as f:
-#         f.write(json.dumps(log_entry) + "\n")
-
-# def submit_with_logging(payload, url):
-#     result = post_payload(payload, url)
-
-#     if result["status"] == "success":
-#         _log_status("SUCCESS", payload, f"Code {result['code']}")
-#     else:
-#         _log_status(
-#             "FAILURE", 
-#             payload, 
-#             f"{result.get('error', 'Unknown error')} → Code {result.get('code', 'N/A')}"
-#         )
-#         _save_failed_payload(payload)
-
-#     return result
-
-
-# def retry_failed_payloads(url):
-#     import os
-
-#     if not os.path.exists(FAILED_FILE):
-#         print("No failed submissions to retry.")
-#         return
-
-#     new_failures = []
-#     with open(FAILED_FILE, "r") as f:
-#         for line in f:
-#             try:
-#                 payload = json.loads(line.strip())
-#                 result = post_payload(payload, url)
-
-#                 if result["status"] == "success":
-#                     _log_status("RETRY SUCCESS", payload, f"Code {result['code']}")
-#                 else:
-#                     _log_status(
-#                         "RETRY FAILURE", 
-#                         payload, 
-#                         f"{result.get('error', 'Unknown error')} → Code {result.get('code', 'N/A')}"
-#                     )
-#                     new_failures.append(payload)
-
-#             except json.JSONDecodeError as e:
-#                 _log_status("RETRY ERROR", {"reportId": "N/A"}, f"Invalid JSON line → {str(e)}")
-
-#     # Overwrite failed.jsonl with only the new failures
-#     with open(FAILED_FILE, "w") as f:
-#         for item in new_failures:
-#             f.write(json.dumps(item) + "\n")
-
-#     print(f"Retry complete. {len(new_failures)} still failed.")
-
-
 
 
 import requests
@@ -116,96 +9,114 @@ FAILED_FILE = "failed.jsonl"
 
 def post_payload(payload, url):
     try:
-        # For /test-post we send as a file to exercise both code paths
         if url.endswith("/test-post"):
             files = {'file': ('payload.json', json.dumps(payload), 'application/json')}
-            response = requests.post(url, files=files, timeout=30)
+            resp = requests.post(url, files=files, timeout=30)
         else:
-            response = requests.post(url, json=payload, timeout=30)
+            resp = requests.post(url, json=payload, timeout=30)
 
-        if response.status_code in (200, 201):
-            return {
-                "status": "success",
-                "code": response.status_code,
-                "response": response.json() if response.content else "No content"
-            }
+        if resp.status_code in (200, 201):
+            return {"status": "success", "code": resp.status_code,
+                    "response": resp.json() if resp.content else "No content"}
         else:
-            return {
-                "status": "failed",
-                "code": response.status_code,
-                "error": response.text
-            }
+            # Server returned a non-2xx — we have an HTTP code
+            return {"status": "failed", "code": resp.status_code,
+                    "error": resp.text or f"HTTP {resp.status_code}"}
 
     except requests.exceptions.RequestException as e:
-        return {"status": "error", "error": str(e)}
+        # Network/client errors — no HTTP code
+        return {"status": "error", "code": None, "error": str(e)}
 
-def _log_status(status, payload, detail):
+
+def _log_status(status: str, payload: dict, detail: str, code: int | None = None, logfile: str = LOG_FILE):
+    rid = (payload or {}).get("reportId", "N/A")
     ts = datetime.utcnow().isoformat()
-    rid = payload.get("reportId", "N/A") if isinstance(payload, dict) else "N/A"
-    with open(LOG_FILE, "a") as log:
-        log.write(f"[{ts}] {status}: {rid} → {detail}\n")
+    line = f"[{ts}] {status}: {rid} → {detail}"
+    if code is not None:
+        line += f" → Code {code}"
+    with open(logfile, "a") as f:
+        f.write(line + "\n")
 
-def _save_failed_payload(payload: dict):
-    # Always store just the payload, plus a retry_count
-    rec = dict(payload)
-    rec["retry_count"] = int(rec.get("retry_count", 0))
-    with open("failed.jsonl", "a") as f:
+def _save_failed_payload(payload: dict, error_msg: str = "", failed_path: str = FAILED_FILE):
+    rec = {
+        "payload": payload,
+        "retry_count": 0,
+        "first_seen": datetime.utcnow().isoformat(),
+        "last_error": error_msg,
+    }
+    with open(failed_path, "a") as f:
         f.write(json.dumps(rec) + "\n")
 
-def retry_failed_payloads(url, max_passes=1):
-    """
-    Simple retry loop over failed.jsonl.
-    max_passes=1 means: make one pass through current file.
-    (You can call this on a schedule to emulate unlimited retries.)
-    """
-    import os
 
+def submit_with_logging(payload, url):
+    result = post_payload(payload, url)
+
+    if result["status"] == "success":
+        _log_status("SUCCESS", payload, "OK", code=result.get("code", 200))
+    elif result["status"] == "failed":
+        _log_status("FAILURE", payload, result.get("error", "Unknown error"), code=result.get("code"))
+        _save_failed_payload(payload, last_error=result.get("error"))
+    else:  # "error" (network/timeouts)
+        _log_status("FAILURE", payload, result.get("error", "Unknown error"), code=None)
+        _save_failed_payload(payload, last_error=result.get("error"))
+
+    return result
+
+
+def retry_failed_payloads(url, max_retries=3):
+    """Legacy helper kept for compatibility (runner uses its own loop)."""
+    import os
     if not os.path.exists(FAILED_FILE):
         print("No failed submissions to retry.")
         return
 
-    remaining = []
+    kept = []
     with open(FAILED_FILE, "r") as f:
         for line in f:
             if not line.strip():
                 continue
-            # Each line is {"timestamp": "...", "payload": {...}}
             try:
-                wrapped = json.loads(line.strip())
-                payload = wrapped.get("payload", {})
-            except json.JSONDecodeError as e:
-                _log_status("RETRY ERROR", {"reportId": "N/A"}, f"Invalid JSON line → {str(e)}")
-                continue
+                obj = json.loads(line)
+                # Accept both schemas:
+                if "payload" in obj:
+                    payload = obj["payload"]
+                    retry_count = int(obj.get("retry_count", 0))
+                else:
+                    payload = obj
+                    retry_count = int(payload.get("retry_count", 0))
 
-            result = post_payload(payload, url)
-            if result["status"] == "success":
-                _log_status("RETRY SUCCESS", payload, f"Code {result['code']}")
-            else:
-                code_txt = f"Code {result.get('code', 'N/A')}"
-                _log_status("RETRY FAILURE", payload, f"{result.get('error','Unknown error')} → {code_txt}")
-                remaining.append(wrapped)  # keep the same structure
+                if retry_count >= max_retries:
+                    kept.append(obj)  # keep for next time
+                    continue
 
-    # overwrite with only the ones still failing
+                res = post_payload(payload, url)
+                if res["status"] == "success":
+                    _log_status("RETRY SUCCESS", payload, "OK", code=res.get("code", 200))
+                    # drop it
+                elif res["status"] == "failed":
+                    _log_status("RETRY FAILURE", payload, res.get("error", "Unknown error"), code=res.get("code"))
+                    # increment and keep
+                    if "payload" in obj:
+                        obj["retry_count"] = retry_count + 1
+                        obj["last_error"] = res.get("error", "")
+                        kept.append(obj)
+                    else:
+                        payload["retry_count"] = retry_count + 1
+                        kept.append(payload)
+                else:
+                    _log_status("RETRY FAILURE", payload, res.get("error", "Unknown error"), code=None)
+                    if "payload" in obj:
+                        obj["retry_count"] = retry_count + 1
+                        obj["last_error"] = res.get("error", "")
+                        kept.append(obj)
+                    else:
+                        payload["retry_count"] = retry_count + 1
+                        kept.append(payload)
+            except Exception as e:
+                _log_status("RETRY ERROR", {"reportId": "N/A"}, f"Invalid JSONL line → {str(e)}", code=None)
+
     with open(FAILED_FILE, "w") as f:
-        for item in remaining:
+        for item in kept:
             f.write(json.dumps(item) + "\n")
 
-    print(f"Retry complete. {len(remaining)} still failed.")
-
-
-"""
-Calls post_payload, logs SUCCESS/FAILURE, and appends to failed.jsonl on failure.
-Returns the result dict from post_payload.
-"""
-def submit_with_logging(payload, url):
-    result = post_payload(payload, url)
-
-    if result.get("status") == "success" and result.get("code") in (200, 201):
-        _log_status("SUCCESS", payload, f"Code {result['code']}")
-    else:
-        # include HTTP code in the log detail if we have it
-        detail = f"{result.get('error', 'Unknown error')} → Code {result.get('code', 'N/A')}"
-        _log_status("FAILURE", payload, detail)
-        _save_failed_payload(payload)
-
-    return result
+    print(f"Retry complete. {len(kept)} still failed.")
