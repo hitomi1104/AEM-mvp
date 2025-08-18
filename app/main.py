@@ -6,7 +6,15 @@ import json
 from app.utils import mask_json_values
 from app.poster import _log_status, _save_failed_payload
 
+from app.routes import upload
+
+
+
+print("🧠 Upload router loaded!") 
+
+
 app = FastAPI()
+app.include_router(upload.router)
 
 @app.get("/")
 def root():

@@ -21,7 +21,7 @@ async def upload_csv(file: UploadFile = File(...)):
 
     for _, row in df.iterrows():
         payload = row.to_dict()
-        result = post_payload(payload, url="http://localhost:8000/test-post")  # or your Render URL
+        result = post_payload(payload, url="http://127.0.0.1:8000/test-post")  # or Render URL
         results.append({
             "reportId": payload.get("reportId", "<missing>"),
             "status": result["status"],

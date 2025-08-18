@@ -6,3 +6,5 @@
 [2025-08-17T00:44:40.694742] RETRY FAILURE: AEV-FAIL-001 → {"status":"error","error":"Simulated failure via triggerFail"} → Code 500
 [2025-08-17T00:44:44.192314] FAILURE: AEV-FAIL-001 → Simulated failure via triggerFail → Code 500
 [2025-08-17T00:44:44.193025] RETRY FAILURE: AEV-FAIL-001 → {"status":"error","error":"Simulated failure via triggerFail"} → Code 500
+[2025-08-18T20:30:24.050992] SUCCESS: AEV-101 → OK → Code 200
+[2025-08-18T20:30:24.052070] FAILURE: AEV-FAIL-102 → Simulated failure via triggerFail → Code 500
