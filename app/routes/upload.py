@@ -1,15 +1,18 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from typing import List
 import pandas as pd
-from app.poster import post_payload
+
+from app.utils import mask_json_values
+from app.poster import _log_status, _save_failed_payload
 
 router = APIRouter()
 
-@router.post("/upload-csv", summary="Upload CSV or Excel file and auto-send to /test-post")
+
+@router.post("/upload-csv", summary="Upload CSV or Excel file and auto-send to /test-post logic")
 async def upload_csv(file: UploadFile = File(...)):
     filename = file.filename.lower()
 
-    # Check file extension
+    # Read file based on extension
     if filename.endswith(".csv"):
         df = pd.read_csv(file.file)
     elif filename.endswith(".xlsx"):
@@ -21,12 +24,23 @@ async def upload_csv(file: UploadFile = File(...)):
 
     for _, row in df.iterrows():
         payload = row.to_dict()
-        result = post_payload(payload, url="http://127.0.0.1:8000/test-post")  # or Render URL
-        results.append({
-            "reportId": payload.get("reportId", "<missing>"),
-            "status": result["status"],
-            "code": result.get("code"),
-            "error": result.get("error")
-        })
+        masked_payload = mask_json_values(payload)
+
+        if payload.get("triggerFail") is True:
+            _log_status("FAILURE", masked_payload, "Simulated failure via triggerFail", code=500)
+            _save_failed_payload(payload)
+            results.append({
+                "reportId": payload.get("reportId", "<missing>"),
+                "status": "error",
+                "code": 500,
+                "error": "Simulated failure via triggerFail"
+            })
+        else:
+            _log_status("SUCCESS", masked_payload, "OK", code=200)
+            results.append({
+                "reportId": payload.get("reportId", "<missing>"),
+                "status": "success",
+                "code": 200
+            })
 
     return {"processed": len(results), "results": results}
