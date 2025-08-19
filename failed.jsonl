@@ -1,0 +1,1 @@
+{"payload": {"reportId": "AEV-FAIL-001", "eventDate": "2025-08-19", "triggerFail": true}, "retry_count": 3, "first_seen": "2025-08-19T07:20:38.335763", "last_error": "{\"status\":\"error\",\"error\":\"Simulated failure via triggerFail\"}"}
