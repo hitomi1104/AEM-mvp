@@ -6,7 +6,8 @@ payload = {
 }
 
 response = requests.post(
-    "http://127.0.0.1:8000/generate-json-lsmv",
+    # "http://127.0.0.1:8000/generate-json-lsmv",
+    "https://aem-mvp.onrender.com/test-post",
     json=payload,
     timeout=10
 )
